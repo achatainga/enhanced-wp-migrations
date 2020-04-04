@@ -10,9 +10,7 @@
     }
   ],
   "autoload": {
-    "psr-4": {
-      "EnhancedWPMigrations\\": "src/"
-    }
+    "classmap": [ "src/cli", "src/database" ]
   },
   "require": {
 	"php": ">=5.4",
