@@ -23,7 +23,7 @@ You need to have access to run WP CLI on the server. Typically `wp dbi migrate` 
 ### Key Differences from wp-migrations
 - Removed support for multiple migration directories. I've made assumption that all of your migration files should be located at one place only. So that the package can follow [SemVer](https://semver.org/) in the migration names and filenames (Similar to [Flyway](https://flywaydb.org/)).
 - Individual migrations will be identified with their respective semver number. E.g., `1`, `1.0.1`, `1.1` etc.
-- `wp edbi migrate` command will use the version number of the migration instead of the class name. E.g., `wp edbi migrate 2.0.1`
+- `wp edbm migrate` command will use the version number of the migration instead of the class name. E.g., `wp edbm migrate 2.0.1`
 - Migration file name conventions is `<version-number>.php`. E.g., `1.php`, `1.0.1.php`, `2.1.php` etc. Usually, you can start your migrations from `0.0.1.php`.
 - Make sure you put only one class in one migration file.
 
@@ -31,15 +31,16 @@ You need to have access to run WP CLI on the server. Typically `wp dbi migrate` 
 
 - `composer require desaiuditd/enhanced-wp-migrations`
 - Bootstrap the package by adding `\EnhancedWPMigrations\Database\Migrator::instance();` to an mu-plugin.
+- Run `wp edbm migrate --setup` on the server.
 
 ### Migrations
 
-By default, the command will look for migration files in `/app/migrations` directory alongside the vendor folder. This can be altered with the filter `edbi_wp_migrations_path`.
+By default, the command will look for migration files in `/app/migrations` directory alongside the vendor folder. This can be altered with the filter `edbm_wp_migrations_path`.
 
 An example migration to create a table would look like:
 
 ```
-<!-- 1.0.php -->
+<!-- 0.0.1.php -->
 <?php
 
 use EnhancedWPMigrations\Database\AbstractMigration;
@@ -72,6 +73,7 @@ We are also using the migrations to deploy development data changes at deploymen
 For example, to add a new page:
 
 ```
+<!-- 0.0.1.php -->
 <?php
 
 use EnhancedWPMigrations\Database\AbstractMigration;
@@ -91,6 +93,6 @@ class AddPricingPage extends AbstractMigration {
 
 ### Use
 
-You can run specific migrations using the filename as an argument, eg. `wp edbi migrate 2.1.1`.
+You can run specific migrations using the filename as an argument, eg. `wp edbm migrate 2.1.1`.
 
-To rollback all migrations you can run `wp edbi migrate --rollback`, or just a specific migration `wp edbi migrate 2.1.1 --rollback`.
+To rollback all migrations you can run `wp edbm migrate --rollback`, or just a specific migration `wp edbm migrate 2.1.1 --rollback`.

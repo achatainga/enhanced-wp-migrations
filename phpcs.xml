@@ -90,7 +90,7 @@
 	<rule ref="WordPress.WP.I18n">
 		<properties>
 			<property name="text_domain" type="array">
-				<element value="thinkprint"/>
+				<element value="edbm"/>
 			</property>
 		</properties>
 	</rule>

@@ -11,14 +11,14 @@ class Migrator {
 	 */
 	private static $instance;
 
-	protected $table_name = 'edbrns_migrations';
+	protected $table_name = 'edbm_migrations';
 
 	/**
 	 * @param string $command_name
 	 *
 	 * @return Migrator Instance
 	 */
-	public static function instance( $command_name = 'edbi' ) {
+	public static function instance( $command_name = 'edbm' ) {
 		if ( ! isset( self::$instance ) && ! ( self::$instance instanceof Migrator ) ) {
 			self::$instance = new Migrator();
 			self::$instance->init( $command_name );
@@ -84,7 +84,7 @@ class Migrator {
 			$base_path = dirname( $base_path );
 		}
 
-		$path = apply_filters( 'edbi_wp_migrations_path', dirname( $base_path ) . '/app/migrations' );
+		$path = apply_filters( 'edbm_wp_migrations_path', dirname( $base_path ) . '/app/migrations' );
 		$migrations = glob( trailingslashit( $path ) . '*.php' );
 
 		if ( empty( $migrations ) ) {
@@ -93,7 +93,9 @@ class Migrator {
 
 		usort(
 			$migrations,
-			[ $this, 'sort_migrations' ]
+			function ( $mi1, $mi2 ) use ( $path ) {
+				return $this->sort_migrations( $mi1, $mi2, $path );
+			}
 		);
 
 		foreach ( $migrations as $filename ) {
@@ -129,7 +131,10 @@ class Migrator {
 	protected function get_migrations_to_run( $migration = null, $rollback = false ) {
 		global $wpdb;
 		$table = $wpdb->prefix . $this->table_name;
-		$ran_migrations = $wpdb->get_col( $wpdb->prepare( 'SELECT version FROM %s', $table ) );
+
+		// https://github.com/WordPress/WordPress-Coding-Standards/issues/1589
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$ran_migrations = $wpdb->get_col( "SELECT version from {$table}" );
 
 		$migrations = $this->get_migrations( $ran_migrations, $migration, $rollback );
 
@@ -151,6 +156,10 @@ class Migrator {
 		$migrations = $this->get_migrations_to_run( $migration, $rollback );
 		if ( empty( $migrations ) ) {
 			return $count;
+		}
+
+		if ( $rollback ) {
+			$migrations = array_reverse( $migrations, true );
 		}
 
 		foreach ( $migrations as $file => $version ) {
@@ -191,7 +200,7 @@ class Migrator {
 		return $count;
 	}
 
-	protected function sort_migrations( $mi1, $mi2 ) {
+	protected function sort_migrations( $mi1, $mi2, $path ) {
 		$ver1 = str_replace(
 			'.php',
 			'',

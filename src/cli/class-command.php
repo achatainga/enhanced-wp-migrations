@@ -42,8 +42,7 @@ class Command extends \WP_CLI_Command {
 		}
 
 		$rollback = false;
-		if ( $migration && isset( $assoc_args['rollback'] ) ) {
-			// Can only rollback specific migration
+		if ( isset( $assoc_args['rollback'] ) ) {
 			$rollback = true;
 		}
 
@@ -52,7 +51,8 @@ class Command extends \WP_CLI_Command {
 			\WP_CLI::warning( 'There are no migrations to run.' );
 		} else {
 			$action = $rollback ? 'rolled back' : 'run';
-			\WP_CLI::success( $total . ' migrations ' . $action );
+			/* translators: %s: Number of migrations. */
+			\WP_CLI::success( sprintf( _n( '%1$d migration %2$s.', '%1$d migrations %2$s.', $total, 'edbm' ), $total, $action ) );
 		}
 	}
 }
