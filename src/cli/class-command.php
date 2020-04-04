@@ -1,6 +1,6 @@
 <?php
 
-namespace DeliciousBrains\WPMigrations\CLI;
+namespace EnhancedWPMigrations\CLI;
 
 class Command extends \WP_CLI_Command {
 
@@ -24,7 +24,7 @@ class Command extends \WP_CLI_Command {
 	 * @throws \WP_CLI\ExitException
 	 */
 	public function __invoke( $args, $assoc_args ) {
-		$migrator = \DeliciousBrains\WPMigrations\Database\Migrator::instance();
+		$migrator = \EnhancedWPMigrations\Database\Migrator::instance();
 
 		if ( isset( $assoc_args['setup'] ) ) {
 			if ( ! $migrator->setup() ) {
@@ -48,7 +48,7 @@ class Command extends \WP_CLI_Command {
 		}
 
 		$total = $migrator->run( $migration, $rollback );
-		if ( 0 == $total ) {
+		if ( 0 === $total ) {
 			\WP_CLI::warning( 'There are no migrations to run.' );
 		} else {
 			$action = $rollback ? 'rolled back' : 'run';

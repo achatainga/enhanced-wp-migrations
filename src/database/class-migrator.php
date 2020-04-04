@@ -1,8 +1,8 @@
 <?php
 
-namespace DeliciousBrains\WPMigrations\Database;
+namespace EnhancedWPMigrations\Database;
 
-use DeliciousBrains\WPMigrations\CLI\Command;
+use EnhancedWPMigrations\CLI\Command;
 
 class Migrator {
 
@@ -11,14 +11,14 @@ class Migrator {
 	 */
 	private static $instance;
 
-	protected $table_name = 'dbrns_migrations';
+	protected $table_name = 'edbrns_migrations';
 
 	/**
 	 * @param string $command_name
 	 *
 	 * @return Migrator Instance
 	 */
-	public static function instance( $command_name = 'dbi') {
+	public static function instance( $command_name = 'edbi' ) {
 		if ( ! isset( self::$instance ) && ! ( self::$instance instanceof Migrator ) ) {
 			self::$instance = new Migrator();
 			self::$instance->init( $command_name );
@@ -31,7 +31,7 @@ class Migrator {
 	 * @param string $command_name
 	 */
 	public function init( $command_name ) {
-		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			\WP_CLI::add_command( $command_name . ' migrate', Command::class );
@@ -48,16 +48,16 @@ class Migrator {
 
 		$table = $wpdb->prefix . $this->table_name;
 
-		if ( $wpdb->get_var( "SHOW TABLES LIKE '$table'" ) === $table ) {
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table ) {
 			return false;
 		}
 
 		$collation = ! $wpdb->has_cap( 'collation' ) ? '' : $wpdb->get_charset_collate();
 
 		// Create migrations table
-		$sql = "CREATE TABLE " . $table . " (
+		$sql = 'CREATE TABLE ' . $table . " (
 			id bigint(20) NOT NULL auto_increment,
-			name varchar(255) NOT NULL,
+			version varchar(255) NOT NULL,
 			date_ran datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 			PRIMARY KEY  (id)
 			) {$collation};";
@@ -76,44 +76,43 @@ class Migrator {
 	 *
 	 * @return array
 	 */
-	protected function get_migrations( $exclude = array(), $migration = null, $rollback = false ) {
-		$all_migrations = array();
+	protected function get_migrations( $exclude = [], $migration = null, $rollback = false ) {
+		$all_migrations = [];
 
 		$base_path = __FILE__;
-		while ( basename( $base_path ) != 'vendor' ) {
+		while ( basename( $base_path ) !== 'vendor' ) {
 			$base_path = dirname( $base_path );
 		}
 
-		$path  = apply_filters( 'dbi_wp_migrations_path', dirname( $base_path ) . '/app/migrations' );
-		$paths = apply_filters( 'dbi_wp_migrations_paths', array( $path ) );
-
-		$migrations = array();
-		foreach ( $paths as $path ) {
-			$path_migrations = glob( trailingslashit( $path ) . '*.php' );
-			$migrations      = array_merge( $migrations, $path_migrations );
-		}
+		$path = apply_filters( 'edbi_wp_migrations_path', dirname( $base_path ) . '/app/migrations' );
+		$migrations = glob( trailingslashit( $path ) . '*.php' );
 
 		if ( empty( $migrations ) ) {
 			return $all_migrations;
 		}
 
+		usort(
+			$migrations,
+			[ $this, 'sort_migrations' ]
+		);
+
 		foreach ( $migrations as $filename ) {
-			$name = basename( $filename, '.php' );
-			if ( ! $rollback && in_array( $name, $exclude ) ) {
+			$version = basename( $filename, '.php' );
+			if ( ! $rollback && in_array( $version, $exclude, true ) ) {
 				// The migration can't have been run before
 				continue;
 			}
 
-			if ( $rollback && ! in_array( $name, $exclude ) ) {
+			if ( $rollback && ! in_array( $version, $exclude, true ) ) {
 				// As we are rolling back, it must have been run before
 				continue;
 			}
 
-			if ( $migration && $this->get_class_name( $name ) !== $migration ) {
+			if ( $migration && $version !== $migration ) {
 				continue;
 			}
 
-			$all_migrations[ $filename ] = $name;
+			$all_migrations[ $filename ] = $version;
 		}
 
 		return $all_migrations;
@@ -124,12 +123,13 @@ class Migrator {
 	 *
 	 * @param string|null $migration
 	 * @param bool        $rollback
+	 *
 	 * @return array
 	 */
 	protected function get_migrations_to_run( $migration = null, $rollback = false ) {
 		global $wpdb;
 		$table = $wpdb->prefix . $this->table_name;
-		$ran_migrations = $wpdb->get_col( "SELECT name FROM $table");
+		$ran_migrations = $wpdb->get_col( $wpdb->prepare( 'SELECT version FROM %s', $table ) );
 
 		$migrations = $this->get_migrations( $ran_migrations, $migration, $rollback );
 
@@ -153,55 +153,66 @@ class Migrator {
 			return $count;
 		}
 
-		foreach ( $migrations as $file => $name ) {
-			require_once $file;
+		foreach ( $migrations as $file => $version ) {
+			$prev_classes = get_declared_classes();
 
-			$class_name    = $this->get_class_name( $name );
-			$fq_class_name = $this->get_class_with_namespace( $class_name );
-			if ( false === $fq_class_name ) {
+			include $file;
+
+			$diff = array_diff( get_declared_classes(), $prev_classes );
+			$migration_class = reset( $diff );
+
+			if ( false === $migration_class ) {
 				continue;
 			}
 
-			$class     = $fq_class_name;
-			$migration = new $class;
+			$migration = new $migration_class();
 			$method    = $rollback ? 'rollback' : 'run';
 			if ( ! method_exists( $migration, $method ) ) {
 				continue;
 			}
 
 			$migration->{$method}();
-			$count ++;
+			$count++;
 
 			if ( $rollback ) {
-				$wpdb->delete( $table, array( 'name' => $name ) );
+				$wpdb->delete( $table, [ 'version' => $version ] );
 				continue;
 			}
 
-			$wpdb->insert( $table, array( 'name' => $name, 'date_ran' => date("Y-m-d H:i:s") ) );
+			$wpdb->insert(
+				$table,
+				[
+					'version'  => $version,
+					'date_ran' => gmdate( 'Y-m-d H:i:s' ),
+				]
+			);
 		}
 
 		return $count;
 	}
 
-	protected function get_class_with_namespace( $class_name ) {
-		$all_classes = get_declared_classes();
-		foreach ( $all_classes as $class ) {
-			if ( substr( $class, - strlen( $class_name ) ) === $class_name ) {
-				return $class;
-			}
-		}
+	protected function sort_migrations( $mi1, $mi2 ) {
+		$ver1 = str_replace(
+			'.php',
+			'',
+			str_replace(
+				trailingslashit( $path ),
+				'',
+				$mi1
+			)
+		);
 
-		return false;
-	}
+		$ver2 = str_replace(
+			'.php',
+			'',
+			str_replace(
+				trailingslashit( $path ),
+				'',
+				$mi2
+			)
+		);
 
-	protected function get_class_name( $name ) {
-		return $this->camel_case( substr( $name, 11 ) );
-	}
-
-	protected function camel_case( $string ) {
-		$string = ucwords( str_replace( array( '-', '_' ), ' ', $string ) );
-
-		return str_replace( ' ', '', $string );
+		return version_compare( $ver1, $ver2 );
 	}
 
 	/**

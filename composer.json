@@ -1,26 +1,26 @@
 {
-  "name": "deliciousbrains/wp-migrations",
+  "name": "desaiuditd/enhanced-wp-migrations",
   "description": "WordPress library for managing database table schema upgrades and data seeding",
   "license": "GPL-2.0-or-later",
   "authors": [
     {
-      "name": "Delicious Brains",
-      "email": "nom@deliciousbrains.com",
-      "homepage": "https://deliciousbrains.com/"
-    }
-  ],
-  "repositories": [
-    {
-      "type": "git",
-      "url": "https://github.com/polevaultweb/wp-eloquent/"
+      "name": "Udit Desai",
+      "email": "desaiuditd@gmail.com",
+      "homepage": "https://github.com/desaiuditd"
     }
   ],
   "autoload": {
     "psr-4": {
-      "DeliciousBrains\\WPMigrations\\": "src/"
+      "EnhancedWPMigrations\\": "src/"
     }
   },
   "require": {
+	"php": ">=5.4",
     "wp-cli/wp-cli": "^2.2.0"
+  },
+  "require-dev": {
+    "dealerdirect/phpcodesniffer-composer-installer": "^0.5.0",
+    "phpmd/phpmd": "^2.7",
+    "wp-coding-standards/wpcs": "^2.1"
   }
 }
