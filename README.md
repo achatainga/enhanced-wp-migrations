@@ -1,4 +1,4 @@
-# Delicious Brains WordPress Migrations
+# Enhanced WordPress Migrations
 
 A WordPress library for managing database table schema upgrades and data seeding.
 
