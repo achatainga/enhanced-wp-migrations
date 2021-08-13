@@ -169,12 +169,12 @@ class Migrator {
 
 			$diff = array_diff( get_declared_classes(), $prev_classes );
 			$migration_class = next( $diff );
-			var_dump( $migration_class );
 
 			if ( false === $migration_class ) {
 				$migration_class = reset( $diff );
 				if ( false === $migration_class ) continue;
 			}
+			var_dump( $migration_class );
 
 			$migration = new $migration_class();
 			$method    = $rollback ? 'rollback' : 'run';
