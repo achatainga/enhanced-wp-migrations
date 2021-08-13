@@ -168,7 +168,7 @@ class Migrator {
 			include $file;
 
 			$diff = array_diff( get_declared_classes(), $prev_classes );
-			$migration_class = next($diff); //reset( $diff );
+			$migration_class = reset( $diff ); //next($diff); //
 
 			if ( false === $migration_class ) {
 				continue;
