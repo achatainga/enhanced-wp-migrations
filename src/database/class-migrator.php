@@ -11,14 +11,14 @@ class Migrator {
 	 */
 	private static $instance;
 
-	protected $table_name = 'edbm_migrations';
+	protected $table_name = 'nf_migrations';
 
 	/**
 	 * @param string $command_name
 	 *
 	 * @return Migrator Instance
 	 */
-	public static function instance( $command_name = 'edbm' ) {
+	public static function instance( $command_name = 'nf' ) {
 		if ( ! isset( self::$instance ) && ! ( self::$instance instanceof Migrator ) ) {
 			self::$instance = new Migrator();
 			self::$instance->init( $command_name );
@@ -84,7 +84,7 @@ class Migrator {
 			$base_path = dirname( $base_path );
 		}
 
-		$path = apply_filters( 'edbm_wp_migrations_path', dirname( $base_path ) . '/app/migrations' );
+		$path = apply_filters( 'nf_wp_migrations_path', dirname( $base_path ) . '/app/migrations' );
 		$migrations = glob( trailingslashit( $path ) . '*.php' );
 
 		if ( empty( $migrations ) ) {
