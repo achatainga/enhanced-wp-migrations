@@ -1,12 +1,12 @@
 {
-  "name": "desaiuditd/enhanced-wp-migrations",
+  "name": "achatainga/enhanced-wp-migrations",
   "description": "WordPress library for managing database table schema upgrades and data seeding",
   "license": "GPL-2.0-or-later",
   "authors": [
     {
       "name": "Udit Desai",
-      "email": "desaiuditd@gmail.com",
-      "homepage": "https://github.com/desaiuditd"
+      "email": "achatainga@gmail.com",
+      "homepage": "https://github.com/achatainga"
     }
   ],
   "autoload": {
