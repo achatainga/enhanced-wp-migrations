@@ -174,9 +174,12 @@ class Migrator {
 				$migration_class = reset( $diff );
 				if ( false === $migration_class ) continue;
 			}
-			var_dump( $migration_class );
-
-			$migration = new $migration_class();
+			// var_dump( $migration_class );
+			$migration = ( $migration_class == "EnhancedWPMigrations\Database\AbstractMigration" ) ?: new $migration_class();
+			$method    = $rollback ? 'rollback' : 'run';
+			if ( ! method_exists( $migration, $method ) ) {
+				continue;
+			}
 			$method    = $rollback ? 'rollback' : 'run';
 			if ( ! method_exists( $migration, $method ) ) {
 				continue;
