@@ -168,12 +168,7 @@ class Migrator {
 			include $file;
 
 			$diff = array_diff( get_declared_classes(), $prev_classes );
-			$migration_class = next( $diff );
-
-			if ( false === $migration_class ) {
-				$migration_class = reset( $diff );
-				if ( false === $migration_class ) continue;
-			}
+			$migration_class = reset( $diff );
 			var_dump( $migration_class );
 			$migration = ( $migration_class == "EnhancedWPMigrations\Database\AbstractMigration" ) ?: new $migration_class();
 			$method    = $rollback ? 'rollback' : 'run';
